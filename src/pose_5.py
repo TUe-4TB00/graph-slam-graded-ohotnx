@@ -68,36 +68,27 @@ def minimize_marginals(graph, initial_estimate, pose_options):
     return best_pose, best_landmark, sum_of_marginals
 
 def minimize_errors(graph, initial_estimate, pose_options):
+    #TODO: try different pose and landmark options here, and keep the one with the lowest resulting error.
+    best_pose = "d"      # chosen pose option
+    best_landmark = 1    # chosen landmark (1 or 2)
+    pose_5 = pose_options[best_pose]
+    graph, initial_estimate = add_pose(graph, initial_estimate, pose_5)
+    result = optimize(graph, initial_estimate)
+    graph = add_landmark_measurement(graph, result, pose_5, best_landmark)
+    result = optimize(graph, initial_estimate)
+
     # TODO: create a list of errors (each index corresponds to a pose) and add the error of each pose to the list
     list_of_errors = []
 
-    best_pose = None
-    best_landmark = None
-    best_sum = float('inf')
+    poseX1 = result.atPose2(X(1))
+    list_of_errors.append(np.sqrt((poseX1.x() - 0)**2 + (poseX1.y() - 0)**2 + (poseX1.theta() - 0)**2))
 
-    for pose in pose_options:
-        for landmark in [1,2]:
-            pose_5 = pose_options[pose]
-            graph, initial_estimate = add_pose(graph, initial_estimate, pose_5)
-            result = optimize(graph, initial_estimate)
-            graph = add_landmark_measurement(graph, result, pose_5, landmark)
-            result = optimize(graph, initial_estimate)
+    poseX2 = result.atPose2(X(2))
+    list_of_errors.append(np.sqrt((poseX2.x() - 2)**2 + (poseX2.y() - 0)**2 + (poseX2.theta() - 0)**2))
 
-            for i in [1, 2, 3]:
-                pose = result.atPose2(X(i))
-                err = np.sqrt(
-                        (pose.x() - X(i).x()) ** 2 +
-                        (pose.y() - X(i).y()) ** 2 +
-                        (pose.theta() - X(i).theta()) ** 2
-                    )
-                list_of_errors.append(err) 
-            
-            sum_of_errors = sum(list_of_errors)
+    poseX3 = result.atPose2(X(3)) 
+    list_of_errors.append(np.sqrt((poseX3.x() - 4)**2 + (poseX3.y() - 0)**2 + (poseX3.theta() - 0)**2))
 
-            if sum_of_errors < best_sum:
-                best_sum = sum_of_errors
-                best_pose = pose
-                best_landmark = landmark
     # TODO: compute the sum of the errors and return it along with the best pose and landmark
-    sum_of_errors = best_sum
+    sum_of_errors = sum(list_of_errors)
     return best_pose, best_landmark, sum_of_errors 
